@@ -4,4 +4,14 @@ export default interface User {
     refreshToken: string;
     email: string;
     name: string;
+    bio: string;
+    tokens: number;
+    profilePicture: string;
+    createdAt: number;
+    notifications: Notifications;
+}
+
+export interface Notifications {
+    sellerNewBid: boolean;
+    sellerNewComment: boolean;
 }

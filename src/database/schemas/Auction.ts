@@ -1,10 +1,5 @@
 import mongoose, { Schema, SchemaTypes } from "mongoose";
-import {
-  BodyType,
-  ConditionType,
-  FuelType,
-  TransmissionType,
-} from "../../utils/enums";
+import { FuelType, TransmissionType } from "../../utils/enums";
 
 const AuctionSchema = new Schema({
   title: {
@@ -57,7 +52,7 @@ const AuctionSchema = new Schema({
   },
   registeredProvince: {
     type: SchemaTypes.String,
-    default: ""
+    default: "",
   },
   engineCapacity: {
     type: SchemaTypes.Number,
@@ -96,6 +91,14 @@ const AuctionSchema = new Schema({
   expired: {
     type: SchemaTypes.Boolean,
     default: false,
+  },
+  sellerId: {
+    type: SchemaTypes.String,
+    required: true,
+  },
+  currentHighestBid: {
+    type: SchemaTypes.Number,
+    default: 0,
   },
 });
 

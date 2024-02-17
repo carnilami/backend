@@ -22,7 +22,7 @@ export const AuctionValidation = z.object({
     .min(1947, "Vehicle year cannot be lower than 1947.")
     .max(new Date().getFullYear(), "Invalid Year."),
   registered: z.string(),
-  sellerId: z.string().optional(),
+  sellerId: z.string(),
   engineCapacity: z.number(),
   transmission: z.nativeEnum(TransmissionType, {
     required_error: "Please provide a transmission type.",
@@ -42,4 +42,24 @@ export const AuctionUpdateValidation = z.object({
     .min(3, "Auction title too small.")
     .max(50, "Auction title too big."),
   city: z.string().min(1, "Please provide the city name."),
+});
+
+export const BiddingValidation = z.object({
+  auctionId: z.string().min(1, "Please provide the auction id."),
+  userId: z.string().min(1, "Please provide the user id."),
+  bid: z.number().positive("Bid amount cannot be negative.").min(1000, "Bid amount too small."),
+});
+
+export const UserNotificationsValidation = z.object({
+  sellerNewBid: z.boolean({
+    required_error: "Please provide a value for sellerNewBid.",
+  }),
+  sellerNewComment: z.boolean({
+    required_error: "Please provide a value for sellerNewComment.",
+  }),
+});
+
+export const UserProfileValidation = z.object({
+  name: z.string().min(3, "Name too small.").max(56, "Name too big."),
+  bio: z.string().max(255, "Bio too big."),
 });

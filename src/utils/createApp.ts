@@ -15,7 +15,7 @@ export function createApp() {
   app.use(
     cors({
       origin: "http://localhost:5173",
-      methods: ["GET", "POST", "PATCH", "DELETE"],
+      methods: ["GET", "POST", "PATCH", "DELETE", "PUT"],
       credentials: true,
     })
   );
@@ -26,7 +26,7 @@ export function createApp() {
       resave: false,
       saveUninitialized: false,
       cookie: {
-        maxAge: 1000 * 60 * 5,
+        maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
         httpOnly: false, // TODO: Change to true in production
       },
       store: store.create({
