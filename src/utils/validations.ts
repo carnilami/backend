@@ -47,7 +47,10 @@ export const AuctionUpdateValidation = z.object({
 export const BiddingValidation = z.object({
   auctionId: z.string().min(1, "Please provide the auction id."),
   userId: z.string().min(1, "Please provide the user id."),
-  bid: z.number().positive("Bid amount cannot be negative.").min(1000, "Bid amount too small."),
+  bid: z
+    .number()
+    .positive("Bid amount cannot be negative.")
+    .min(1000, "Bid amount too small."),
 });
 
 export const UserNotificationsValidation = z.object({
@@ -62,4 +65,17 @@ export const UserNotificationsValidation = z.object({
 export const UserProfileValidation = z.object({
   name: z.string().min(3, "Name too small.").max(56, "Name too big."),
   bio: z.string().max(255, "Bio too big."),
+});
+
+export const CommentValidation = z.object({
+  auctionId: z.string().min(1, "Please provide the auction id."),
+  userId: z.string().min(1, "Please provide the user id."),
+  content: z
+    .string()
+    .min(1, "Please provide a comment.")
+    .max(1024, "Comment too big."),
+});
+
+export const CommentUpvoteValidation = z.object({
+  userId: z.string().min(1, "Please provide the user id."),
 });

@@ -28,7 +28,6 @@ passport.use(
       profile: any,
       done: VerifyCallback
     ) {
-      console.log(profile);
       const existingUser = await User.findOneAndUpdate(
         {
           email: profile.emails[0].value,

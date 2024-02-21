@@ -1,3 +1,4 @@
+import moment from "moment";
 import mongoose, { Schema, SchemaTypes } from "mongoose";
 
 const biddingSchema = new Schema({
@@ -15,7 +16,7 @@ const biddingSchema = new Schema({
   },
   createdAt: {
     type: SchemaTypes.Number,
-    default: Date.now(),
+    default: moment().unix(),
   },
 });
 

@@ -1,16 +1,22 @@
 import axios, { AxiosRequestConfig } from "axios";
 import { dataUriToBuffer } from "data-uri-to-buffer";
 import { Request, Response, Router } from "express";
+import moment from "moment";
 import mongoose from "mongoose";
 import { Resend } from "resend";
 import Auction from "../database/schemas/Auction";
 import Bidding from "../database/schemas/Bidding";
+import Comment from "../database/schemas/Comment";
+import UserSchema from "../database/schemas/User";
 import User from "../entities/User";
+import { io } from "../index";
 import { email } from "../utils/emails";
 import {
   AuctionUpdateValidation,
   AuctionValidation,
   BiddingValidation,
+  CommentUpvoteValidation,
+  CommentValidation,
 } from "../utils/validations";
 import auth from "./auth";
 
@@ -26,6 +32,7 @@ router.get("/", async (req: Request, res: Response) => {
 
 router.get("/:id", async (req: Request, res: Response) => {
   const id = req.params.id;
+  const includeSeller = req.query.includeSeller === "true" ? true : false;
 
   if (!id.match(/^[0-9a-fA-F]{24}$/)) {
     return res.status(400).send("Invalid id.");
@@ -36,7 +43,22 @@ router.get("/:id", async (req: Request, res: Response) => {
     return res.status(404).send("Auction not found.");
   }
 
-  res.status(200).send(auction);
+  let auctionWithSeller;
+  if (includeSeller) {
+    const seller = await UserSchema.findById(auction.sellerId);
+    if (seller === null) {
+      return res.status(404).send("Seller not found.");
+    }
+    auctionWithSeller = {
+      ...auction.toObject(),
+      seller: {
+        name: seller.name,
+        profilePicture: seller.profilePicture,
+      },
+    };
+  }
+
+  res.status(200).send(includeSeller ? auctionWithSeller : auction);
 });
 
 router.put("/:id", async (req: Request, res: Response) => {
@@ -79,7 +101,6 @@ router.post("/", auth, async (req: Request, res: Response) => {
   const user = req.user as User;
   const validation = AuctionValidation.safeParse(body);
   if (!validation.success) {
-    console.log(validation.error.issues);
     return res.status(400).send(validation.error.issues[0].message);
   }
 
@@ -98,7 +119,6 @@ router.post("/", auth, async (req: Request, res: Response) => {
       };
 
       const response = await axios.request(options);
-      console.log("success");
       if (response.data.HttpCode === 201) {
         return `${objectId}_${index}.jpg`;
       }
@@ -133,16 +153,6 @@ router.post("/", auth, async (req: Request, res: Response) => {
   });
 
   res.status(201).send(auction);
-
-  console.log(
-    auction.year +
-      " " +
-      auction.make +
-      " " +
-      auction.model +
-      " " +
-      auction.variant
-  );
 
   const { error } = await resend.emails.send({
     from: "No-Reply <noreply@carnilami.com>",
@@ -180,9 +190,25 @@ router.get("/:id/bids", async (req: Request, res: Response) => {
     return res.status(404).send("Auction not found.");
   }
 
-  const biddings = await Bidding.find();
+  const biddings = await Bidding.find({ auctionId: id }).sort({ bid: -1 });
 
-  res.status(200).send(biddings || []);
+  const populatedBiddings = await Promise.all(
+    biddings.map(async (bidding) => {
+      const user = await UserSchema.findById(bidding.userId);
+
+      if (user) {
+        return {
+          ...bidding.toObject(),
+          userName: user.name,
+          userProfilePicture: user.profilePicture,
+        };
+      } else {
+        return bidding.toObject();
+      }
+    })
+  );
+
+  res.status(200).send(populatedBiddings || []);
 });
 
 router.post("/:id/bids", auth, async (req: Request, res: Response) => {
@@ -209,7 +235,9 @@ router.post("/:id/bids", auth, async (req: Request, res: Response) => {
     return res
       .status(400)
       .send(
-        "The minimum bid amount is " + (highestBid.bid + 1000).toLocaleString() + " rupees."
+        "The minimum bid amount is " +
+          (highestBid.bid + 1000).toLocaleString() +
+          " rupees."
       );
   }
 
@@ -217,9 +245,199 @@ router.post("/:id/bids", auth, async (req: Request, res: Response) => {
     auctionId,
     userId: user._id,
     bid: body.bid,
+    createdAt: moment().unix(),
+  });
+
+  await Auction.findByIdAndUpdate(auctionId, { currentHighestBid: body.bid });
+
+  io.emit("bid", {
+    ...bidding.toObject(),
+    userName: user.name,
+    userProfilePicture: user.profilePicture,
   });
 
   res.status(201).send(bidding);
 });
+
+/* Comments */
+
+router.get("/:id/comments", async (req: Request, res: Response) => {
+  const id = req.params.id;
+
+  if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+    return res.status(400).send("Invalid id.");
+  }
+
+  const auction = await Auction.findById(id);
+  if (auction === null) {
+    return res.status(404).send("Auction not found.");
+  }
+
+  const comments = await Comment.find({ auctionId: id }).sort({
+    createdAt: -1,
+  });
+
+  const populatedComments = await Promise.all(
+    comments.map(async (comment) => {
+      const user = await UserSchema.findById(comment.userId);
+
+      if (user) {
+        return {
+          ...comment.toObject(),
+          userName: user.name,
+          userProfilePicture: user.profilePicture,
+        };
+      } else {
+        return comment.toObject();
+      }
+    })
+  );
+
+  res.status(200).send(populatedComments || []);
+});
+
+router.post("/:id/comments", auth, async (req: Request, res: Response) => {
+  const body = req.body;
+  const user = req.user as User;
+  const auctionId = req.params.id;
+
+  if (!auctionId.match(/^[0-9a-fA-F]{24}$/)) {
+    return res.status(400).send("Invalid id.");
+  }
+
+  const auction = await Auction.findById(auctionId);
+  if (auction === null) {
+    return res.status(404).send("Auction not found.");
+  }
+
+  const validation = CommentValidation.safeParse(body);
+  if (!validation.success) {
+    return res.status(400).send(validation.error.issues[0].message);
+  }
+
+  const comment = await Comment.create({
+    auctionId,
+    userId: user._id,
+    content: body.content,
+    createdAt: moment().unix(),
+  });
+
+  io.emit("comment", {
+    ...comment.toObject(),
+    userName: user.name,
+    userProfilePicture: user.profilePicture,
+  });
+
+  res.status(201).send(comment);
+});
+
+router.post(
+  "/:id/comments/:cId/upvotes",
+  auth,
+  async (req: Request, res: Response) => {
+    const body = req.body;
+    const user = req.user as User;
+    const auctionId = req.params.id;
+    const commentId = req.params.cId;
+
+    if (
+      !auctionId.match(/^[0-9a-fA-F]{24}$/) ||
+      !commentId.match(/^[0-9a-fA-F]{24}$/)
+    ) {
+      return res.status(400).send("Invalid id.");
+    }
+
+    const auction = await Auction.findById(auctionId);
+    if (auction === null) {
+      return res.status(404).send("Auction not found.");
+    }
+
+    const comment = await Comment.findById({
+      _id: commentId,
+      auctionId: auctionId,
+    });
+    if (comment === null) {
+      return res.status(404).send("Comment not found.");
+    }
+
+    const validation = CommentUpvoteValidation.safeParse(body);
+    if (!validation.success) {
+      return res.status(400).send(validation.error.issues[0].message);
+    }
+
+    const updatedComment = await Comment.findByIdAndUpdate(
+      commentId,
+      {
+        $push: { upvotes: { userId: user._id, createdAt: moment().unix() } },
+      },
+      { new: true }
+    );
+
+    if (updatedComment === null) {
+      return res.status(500).send("Internal server error.");
+    }
+
+    io.emit("upvote", {
+      ...updatedComment.toObject(),
+      userName: user.name,
+      userProfilePicture: user.profilePicture,
+    });
+
+    res.status(201).send(updatedComment);
+  }
+);
+
+router.delete(
+  "/:id/comments/:cId/upvotes",
+  auth,
+  async (req: Request, res: Response) => {
+    const user = req.user as User;
+    const auctionId = req.params.id;
+    const commentId = req.params.cId;
+
+    if (
+      !auctionId.match(/^[0-9a-fA-F]{24}$/) ||
+      !commentId.match(/^[0-9a-fA-F]{24}$/)
+    ) {
+      return res.status(400).send("Invalid id.");
+    }
+
+    const auction = await Auction.findById(auctionId);
+    if (auction === null) {
+      return res.status(404).send("Auction not found.");
+    }
+
+    const comment = await Comment.findById({
+      _id: commentId,
+      auctionId: auctionId,
+    });
+    if (comment === null) {
+      return res.status(404).send("Comment not found.");
+    }
+
+    const upvote = comment.upvotes.find(
+      (upvote) => upvote.userId === user._id.toString()
+    );
+    if (upvote === undefined) {
+      return res.status(400).send("User has not upvoted this comment.");
+    }
+
+    const updatedComment = await Comment.findByIdAndUpdate(
+      commentId,
+      {
+        $pull: { upvotes: { userId: user._id } },
+      },
+      { new: true }
+    );
+
+    if (updatedComment === null) {
+      return res.status(500).send("Internal server error.");
+    }
+
+    io.emit("upvote_removed", updatedComment);
+
+    res.status(200).send(updatedComment);
+  }
+);
 
 export default router;
