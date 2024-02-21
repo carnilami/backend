@@ -127,6 +127,14 @@ router.post("/", auth, async (req: Request, res: Response) => {
 
   const uploadedIds = await Promise.all(uploadPromises);
 
+  console.log(body.auctionExpiry);
+
+  let auctionExpiry = moment().add(7, "days").unix();
+  if (body.auctionExpiry === "14d")
+    auctionExpiry = moment().add(14, "days").unix();
+  if (body.auctionExpiry === "30d")
+    auctionExpiry = moment().add(30, "days").unix();
+
   const auction = await Auction.create({
     _id: objectId,
     title: body.title,
@@ -149,7 +157,7 @@ router.post("/", auth, async (req: Request, res: Response) => {
     flawed: body.flaws === "yes" ? true : false,
     modified: body.modified === "yes" ? true : false,
     imported: body.imported === "Imported" ? true : false,
-    auctionExpiry: "123455",
+    auctionExpiry: auctionExpiry,
   });
 
   res.status(201).send(auction);
