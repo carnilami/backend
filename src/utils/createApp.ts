@@ -14,7 +14,7 @@ export function createApp() {
 
   app.use(
     cors({
-      origin: process.env.FRONTEND_URL!,
+      origin: [process.env.FRONTEND_URL!, "https://www.carnilami.com"],
       methods: ["GET", "POST", "PATCH", "DELETE", "PUT"],
       credentials: true,
     })

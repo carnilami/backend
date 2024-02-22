@@ -18,7 +18,7 @@ async function main() {
 
     io = new Server(server, {
       cors: {
-        origin: process.env.FRONTEND_URL!,
+        origin: [process.env.FRONTEND_URL!, "https://www.carnilami.com"],
         methods: ["GET", "POST"],
       },
     });
