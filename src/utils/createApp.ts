@@ -4,6 +4,7 @@ import express from "express";
 import session from "express-session";
 import passport from "passport";
 import router from "../routes/routes";
+import { FRONTEND_URL } from "./constants";
 
 require("../strategies/google");
 
@@ -14,7 +15,7 @@ export function createApp() {
 
   app.use(
     cors({
-      origin: "https://carnilami.com",
+      origin: FRONTEND_URL,
       methods: ["GET", "POST", "PATCH", "DELETE", "PUT"],
       credentials: true,
     })
@@ -27,7 +28,7 @@ export function createApp() {
       saveUninitialized: false,
       cookie: {
         maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
-        httpOnly: false, // TODO: Change to true in production
+        httpOnly: process.env.NODE_ENV === "production",
       },
       store: store.create({
         mongoUrl: process.env.MONGO_URI!,
