@@ -4,7 +4,6 @@ import express from "express";
 import session from "express-session";
 import passport from "passport";
 import router from "../routes/routes";
-import { FRONTEND_URL } from "./constants";
 
 require("../strategies/google");
 
@@ -15,7 +14,7 @@ export function createApp() {
 
   app.use(
     cors({
-      origin: FRONTEND_URL,
+      origin: "https://carnilami.com",
       methods: ["GET", "POST", "PATCH", "DELETE", "PUT"],
       credentials: true,
     })

@@ -19,7 +19,7 @@ async function main() {
 
     io = new Server(server, {
       cors: {
-        origin: FRONTEND_URL,
+        origin: "https://carnilami.com",
         methods: ["GET", "POST"],
       },
     });

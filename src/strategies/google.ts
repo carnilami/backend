@@ -1,6 +1,7 @@
 import passport from "passport";
 import { Strategy, VerifyCallback } from "passport-google-oauth20";
 import User from "../database/schemas/User";
+import { API_URL } from "../utils/constants";
 
 passport.serializeUser((user: any, done: VerifyCallback) => {
   done(null, user._id);
@@ -20,7 +21,7 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      callbackURL: "http://localhost:3000/api/auth/google/callback",
+      callbackURL: API_URL + "/api/auth/google/callback",
     },
     async function (
       accessToken: any,
