@@ -8,7 +8,6 @@ import { createApp } from "./utils/createApp";
 
 import http from "http";
 import { Server } from "socket.io";
-import { FRONTEND_URL } from "./utils/constants";
 
 let io: Server;
 
@@ -19,7 +18,7 @@ async function main() {
 
     io = new Server(server, {
       cors: {
-        origin: "https://carnilami.com",
+        origin: process.env.FRONTEND_URL!,
         methods: ["GET", "POST"],
       },
     });
