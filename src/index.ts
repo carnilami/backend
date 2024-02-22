@@ -6,8 +6,9 @@ dotenv.config({ path: ".env" });
 import "./database/database";
 import { createApp } from "./utils/createApp";
 
-import { Server } from "socket.io";
 import http from "http";
+import { Server } from "socket.io";
+import { FRONTEND_URL } from "./utils/constants";
 
 let io: Server;
 
@@ -18,12 +19,14 @@ async function main() {
 
     io = new Server(server, {
       cors: {
-        origin: "http://localhost:5173",
+        origin: FRONTEND_URL,
         methods: ["GET", "POST"],
       },
     });
 
-    server.listen(3000, () => console.log("Listening on port 3000 (express & socket)"));
+    server.listen(3000, () =>
+      console.log("Listening on port 3000 (express & socket)")
+    );
   } catch (err) {
     console.error(err);
   }

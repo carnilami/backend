@@ -4,6 +4,7 @@ import express from "express";
 import session from "express-session";
 import passport from "passport";
 import router from "../routes/routes";
+import { FRONTEND_URL } from "./constants";
 
 require("../strategies/google");
 
@@ -14,7 +15,7 @@ export function createApp() {
 
   app.use(
     cors({
-      origin: "http://localhost:5173",
+      origin: FRONTEND_URL,
       methods: ["GET", "POST", "PATCH", "DELETE", "PUT"],
       credentials: true,
     })
