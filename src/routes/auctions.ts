@@ -160,25 +160,27 @@ router.post("/", auth, async (req: Request, res: Response) => {
 
   res.status(201).send(auction);
 
-  const { error } = await resend.emails.send({
-    from: "No-Reply <noreply@carnilami.com>",
-    to: [user.email || ""],
-    subject: "Auction Submitted",
-    html: email
-      .replace(/\{\$name\}/g, user.name)
-      .replace(
-        /\{\$car\}/g,
-        auction.year +
-          " " +
-          auction.make +
-          " " +
-          auction.model +
-          " " +
-          auction.variant
-      ),
-  });
-  if (error) {
-    console.error("Error sending email: ", error);
+  if (user?.email) {
+    const { error } = await resend.emails.send({
+      from: "No-Reply <noreply@carnilami.com>",
+      to: [user.email || ""],
+      subject: "Auction Submitted",
+      html: email
+        .replace(/\{\$name\}/g, user.name)
+        .replace(
+          /\{\$car\}/g,
+          auction.year +
+            " " +
+            auction.make +
+            " " +
+            auction.model +
+            " " +
+            auction.variant
+        ),
+    });
+    if (error) {
+      console.error("Error sending email: ", error);
+    }
   }
 });
 
