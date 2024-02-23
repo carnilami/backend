@@ -30,15 +30,18 @@ passport.deserializeUser(async (id: string, done: VerifyCallback) => {
 });
 
 passport.use(
-  new LocalStrategy(options, async (phone, password, done) => {
-    const existingUser = await User.findOne({ phone });
-    if (existingUser) {
-      return done(null, existingUser);
+  new LocalStrategy(
+    options,
+    async (phone: string, password: string, done: VerifyCallback) => {
+      const existingUser = await User.findOne({ phone });
+      if (existingUser) {
+        return done(null, existingUser);
+      }
+      const newUser = await User.create({
+        name: phone,
+        phone,
+      });
+      return done(null, newUser);
     }
-    const newUser = await User.create({
-      name: phone,
-      phone,
-    });
-    return done(null, newUser);
-  })
+  )
 );
