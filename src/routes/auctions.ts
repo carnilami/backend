@@ -26,8 +26,25 @@ const resend = new Resend("re_A9qWzEBW_DYMKAUhsxNxTRC2yV2he4i28");
 const apiKey = "ac05a30e-11a9-4e12-8243967912f8-bac3-42ef";
 
 router.get("/", async (req: Request, res: Response) => {
-  const auctions = await Auction.find();
-  res.status(200).send(auctions);
+  const search = req.query.search;
+
+  if (search) {
+    const auctions = await Auction.find();
+
+    const filteredAuctions = auctions.filter((auction) => {
+      const mergedString =
+        `${auction.make} ${auction.model} ${auction.variant}`.toLowerCase();
+
+      const searchQuery = (search as string).toLowerCase();
+
+      return mergedString.includes(searchQuery);
+    });
+
+    res.status(200).send(filteredAuctions);
+  } else {
+    const auctions = await Auction.find();
+    res.status(200).send(auctions);
+  }
 });
 
 router.get("/:id", async (req: Request, res: Response) => {
