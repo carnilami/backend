@@ -127,8 +127,6 @@ router.post("/", auth, async (req: Request, res: Response) => {
 
   const uploadedIds = await Promise.all(uploadPromises);
 
-  console.log(body.auctionExpiry);
-
   let auctionExpiry = moment().add(7, "days").unix();
   if (body.auctionExpiry === "14d")
     auctionExpiry = moment().add(14, "days").unix();
@@ -164,7 +162,7 @@ router.post("/", auth, async (req: Request, res: Response) => {
 
   const { error } = await resend.emails.send({
     from: "No-Reply <noreply@carnilami.com>",
-    to: [user.email],
+    to: [user.email || ""],
     subject: "Auction Submitted",
     html: email
       .replace(/\{\$name\}/g, user.name)

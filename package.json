@@ -12,8 +12,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/connect-ensure-login": "^0.1.9",
+    "@types/passport-local": "^1.0.38",
     "buffer": "^6.0.3",
     "bunnycdn-storage": "^1.0.4",
+    "connect-ensure-login": "^0.1.1",
     "connect-mongo": "^5.1.0",
     "cors": "^2.8.5",
     "data-uri-to-buffer": "^6.0.1",
@@ -25,6 +28,8 @@
     "multer": "^1.4.5-lts.1",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
+    "passport-local": "^1.0.0",
+    "passport-totp": "^0.0.2",
     "resend": "^3.2.0",
     "socket.io": "^4.7.4",
     "zod": "^3.22.4"

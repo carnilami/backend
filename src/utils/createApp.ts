@@ -6,6 +6,7 @@ import passport from "passport";
 import router from "../routes/routes";
 
 require("../strategies/google");
+require("../strategies/local");
 
 export function createApp() {
   const app = express();

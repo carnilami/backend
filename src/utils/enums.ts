@@ -13,7 +13,7 @@ export enum TransmissionType {
 
 export enum ConditionType {
   New = "New",
-  Used = "Used"
+  Used = "Used",
 }
 
 export enum BodyType {
@@ -29,4 +29,9 @@ export enum BodyType {
   Pickup = "Pickup",
   Bus = "Bus",
   Other = "Other",
+}
+
+export enum AuthType {
+  Google = "google",
+  Local = "local",
 }

@@ -1,6 +1,7 @@
 import moment from "moment";
 import mongoose, { Schema, SchemaTypes } from "mongoose";
 import User from "../../entities/User";
+import { AuthType } from "../../utils/enums";
 
 const Notifications = new Schema(
   {
@@ -17,18 +18,21 @@ const Notifications = new Schema(
 const userSchema = new Schema<User>({
   accessToken: {
     type: SchemaTypes.String,
-    required: true,
   },
   refreshToken: {
     type: SchemaTypes.String,
   },
   email: {
     type: SchemaTypes.String,
-    required: true,
+    default: null
   },
   name: {
     type: SchemaTypes.String,
     required: true,
+  },
+  phone: {
+    type: SchemaTypes.String,
+    default: null,
   },
   bio: {
     type: SchemaTypes.String,
@@ -46,6 +50,11 @@ const userSchema = new Schema<User>({
   createdAt: {
     type: SchemaTypes.Number,
     default: moment().unix(),
+  },
+  authType: {
+    type: SchemaTypes.String,
+    enum: Object.values(AuthType),
+    default: "google",
   },
   notifications: {
     type: Notifications,
