@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { Request, Response, Router } from "express";
 import passport from "passport";
 import User from "../entities/User";

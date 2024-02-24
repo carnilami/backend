@@ -8,9 +8,6 @@ const Notifications = new Schema(
     sellerNewBid: {
       type: SchemaTypes.Boolean,
     },
-    sellerNewComment: {
-      type: SchemaTypes.Boolean,
-    },
   },
   { _id: false }
 );
@@ -24,7 +21,7 @@ const userSchema = new Schema<User>({
   },
   email: {
     type: SchemaTypes.String,
-    default: null
+    default: null,
   },
   name: {
     type: SchemaTypes.String,
@@ -60,7 +57,6 @@ const userSchema = new Schema<User>({
     type: Notifications,
     default: {
       sellerNewBid: true,
-      sellerNewComment: true,
     },
   },
 });

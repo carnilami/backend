@@ -162,7 +162,7 @@ router.post("/", auth, async (req: Request, res: Response) => {
     model: body.model,
     variant: body.variant,
     year: body.year,
-    registered: body.registered === "Registered" ? true : false,
+    registered: body.isReserved === "Registered" ? true : false,
     registeredProvince: body.registeredProvince,
     sellerId: body.sellerId,
     engineCapacity: body.engineCapacity,
@@ -177,6 +177,15 @@ router.post("/", auth, async (req: Request, res: Response) => {
 
   res.status(201).send(auction);
 
+  const vehicleDetails =
+    auction.year +
+    " " +
+    auction.make +
+    " " +
+    auction.model +
+    " " +
+    auction.variant;
+
   if (user?.email) {
     const { error } = await resend.emails.send({
       from: "No-Reply <noreply@carnilami.com>",
@@ -184,19 +193,63 @@ router.post("/", auth, async (req: Request, res: Response) => {
       subject: "Auction Submitted",
       html: email
         .replace(/\{\$name\}/g, user.name)
-        .replace(
-          /\{\$car\}/g,
-          auction.year +
-            " " +
-            auction.make +
-            " " +
-            auction.model +
-            " " +
-            auction.variant
-        ),
+        .replace(/\{\$car\}/g, vehicleDetails),
     });
     if (error) {
       console.error("Error sending email: ", error);
+    }
+  }
+
+  if (user?.phone) {
+    try {
+      await axios.post(
+        "https://graph.facebook.com/v18.0/175765962297046/messages",
+        {
+          messaging_product: "whatsapp",
+          to: "+92" + user.phone,
+          type: "template",
+          template: {
+            name: "auction_created",
+            language: {
+              code: "en",
+            },
+            components: [
+              {
+                type: "body",
+                parameters: [
+                  {
+                    type: "text",
+                    text: user.name,
+                  },
+                  {
+                    type: "text",
+                    text: vehicleDetails || "Unknown",
+                  },
+                ],
+              },
+              {
+                type: "button",
+                sub_type: "url",
+                index: "0",
+                parameters: [
+                  {
+                    type: "text",
+                    text: auction.id,
+                  },
+                ],
+              },
+            ],
+          },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
+            contentType: "application/json",
+          },
+        }
+      );
+    } catch (error) {
+      console.log("Error sending whatsapp noti: " + error);
     }
   }
 });
@@ -282,6 +335,73 @@ router.post("/:id/bids", auth, async (req: Request, res: Response) => {
   });
 
   res.status(201).send(bidding);
+
+  const vehicleDetails =
+    auction.year +
+    " " +
+    auction.make +
+    " " +
+    auction.model +
+    " " +
+    auction.variant;
+
+  const seller = await UserSchema.findById(auction.sellerId);
+  if (seller?.phone && seller?.notifications?.sellerNewBid) {
+    try {
+      await axios.post(
+        "https://graph.facebook.com/v18.0/175765962297046/messages",
+        {
+          messaging_product: "whatsapp",
+          to: "+92" + seller.phone,
+          type: "template",
+          template: {
+            name: "auction_bid",
+            language: {
+              code: "en",
+            },
+            components: [
+              {
+                type: "body",
+                parameters: [
+                  {
+                    type: "text",
+                    text: vehicleDetails || "Unknown",
+                  },
+                  {
+                    type: "text",
+                    text: bidding.bid.toLocaleString() || "Unknown",
+                  },
+                  {
+                    type: "text",
+                    text: seller?.name || "Unknown",
+                  },
+                ],
+              },
+              {
+                type: "button",
+                sub_type: "url",
+                index: "0",
+                parameters: [
+                  {
+                    type: "text",
+                    text: auction.id,
+                  },
+                ],
+              },
+            ],
+          },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
+            contentType: "application/json",
+          },
+        }
+      );
+    } catch (error) {
+      console.log("Error sending whatsapp noti: " + error);
+    }
+  }
 });
 
 /* Comments */

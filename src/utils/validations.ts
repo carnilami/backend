@@ -56,10 +56,7 @@ export const BiddingValidation = z.object({
 export const UserNotificationsValidation = z.object({
   sellerNewBid: z.boolean({
     required_error: "Please provide a value for sellerNewBid.",
-  }),
-  sellerNewComment: z.boolean({
-    required_error: "Please provide a value for sellerNewComment.",
-  }),
+  })
 });
 
 export const UserProfileValidation = z.object({
