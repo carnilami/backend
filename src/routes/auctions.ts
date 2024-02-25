@@ -373,7 +373,7 @@ router.post("/:id/bids", auth, async (req: Request, res: Response) => {
                   },
                   {
                     type: "text",
-                    text: seller?.name || "Unknown",
+                    text: user?.name || "Unknown",
                   },
                 ],
               },
